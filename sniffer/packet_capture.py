@@ -46,14 +46,7 @@ class PacketCapture:
         if not self.running:
             return None
 
-        if self.count is not None and self.captured >= self.count:
-            self.running = False
-            return None
-
         raw = self.sock.recv(65535)
         self.captured += 1
-
-        if self.count is not None and self.captured >= self.count:
-            self.running = False
 
         return Packet.from_bytes(raw)

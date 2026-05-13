@@ -37,6 +37,9 @@ class SnifferApp:
                     self.writer.write(packet)
                     self.logger.packet(packet)
 
+                    if self.config.count is not None and self.writer.pkt_count >= self.config.count:
+                        self.capture.stop()
+
             self.logger.info(f"Capture finished, saved packets: {self.writer.pkt_count}")
             return 0
         except KeyboardInterrupt:
