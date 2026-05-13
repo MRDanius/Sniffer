@@ -4,6 +4,7 @@ from sniffer.packet import Packet
 
 
 ETH_P_ALL = 0x0003
+ETH_P_IP = 0x0800
 
 
 class PacketCapture:
