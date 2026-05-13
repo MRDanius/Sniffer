@@ -1,45 +1,12 @@
-
-#Кэш и артефакты Python
-
-**/__pycache__/
+# Пай кэщ
+__pycache__/
 *.py[cod]
-*$py.class
-*.so
-.python-version
 
-
-#Виртуальное окружение
-
+# Окружение
+.venv/
 venv/
 env/
-.env/
-build/
-dist/
+.env
 
-
-#Логи
-
-*.log
-logs/
-
-
-#Безопасность (SSL и конфиги)
-
-*.key
-*.pem
-*.crt
-*.pfx
-
-# Рабочий конфиг (чтобы не затирать настройки друг друга)
-config.json
-
-
-#Файлы IDE и системные
-.idea/
-.vscode/
-*.swp
-*.swo
-*~
-.DS_Store
-Thumbs.db
-desktop.ini
+# Файл захвата
+*.pcap
