@@ -27,7 +27,7 @@ class CLI:
         self.parser.add_argument(
             "-p",
             "--protocol",
-            choices=["tcp", "udp", "icmp"],
+            choices=["tcp", "udp", "icmp", "icmpv6"],
             help="filter by protocol",
         )
         self.parser.add_argument(

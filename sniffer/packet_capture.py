@@ -8,9 +8,8 @@ ETH_P_IP = 0x0800
 
 
 class PacketCapture:
-    def __init__(self, iface, count=None):
+    def __init__(self, iface):
         self.iface = iface
-        self.count = count
         self.sock = None
         self.running = False
         self.captured = 0

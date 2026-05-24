@@ -23,6 +23,21 @@ class Logger:
     def error(self, msg):
         self._log.error(msg)
 
-    def packet(self, packet):
+    def packet(self, packet, http=None):
         if self.verbose:
             self.info(packet.summary())
+
+            if http is not None:
+                self.http(http)
+
+    def http(self, http):
+        if http["type"] == "request":
+            self.info(f"  HTTP request: {http['method']} {http['path']} {http['version']}")
+        else:
+            status = f"{http['version']} {http['status']}"
+            if http["reason"]:
+                status = f"{status} {http['reason']}"
+            self.info(f"  HTTP response: {status}")
+
+        for name, value in http["headers"].items():
+            self.info(f"    {name}: {value}")

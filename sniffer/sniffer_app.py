@@ -1,6 +1,7 @@
 import errno
 import signal
 
+from sniffer.application_layer import parse_http
 from sniffer.logger import Logger
 from sniffer.packet_capture import PacketCapture
 from sniffer.packet_filter import PacketFilter
@@ -10,7 +11,7 @@ from sniffer.pcap_writer import PcapWriter
 class SnifferApp:
     def __init__(self, config, logger=None):
         self.config = config
-        self.capture = PacketCapture(config.interface, config.count)
+        self.capture = PacketCapture(config.interface)
         self.filter = PacketFilter(config.protocol, config.port, config.ip)
         self.writer = PcapWriter(config.output)
         self.logger = logger or Logger(config.verbose)
@@ -35,7 +36,8 @@ class SnifferApp:
 
                 if self.filter.matches(packet):
                     self.writer.write(packet)
-                    self.logger.packet(packet)
+                    http = parse_http(packet)
+                    self.logger.packet(packet, http)
 
                     if self.config.count is not None and self.writer.pkt_count >= self.config.count:
                         self.capture.stop()
