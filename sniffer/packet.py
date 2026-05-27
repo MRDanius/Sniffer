@@ -60,6 +60,8 @@ class Packet:
         udp_len=None,
         udp_checksum=None,
         payload=b"",
+        icmp_type=None,
+        icmp_code=None,
     ):
         self.raw = raw
         self.ts = ts
@@ -79,6 +81,8 @@ class Packet:
         self.udp_len = udp_len
         self.udp_checksum = udp_checksum
         self.payload = payload
+        self.icmp_type = icmp_type
+        self.icmp_code = icmp_code
 
     @classmethod
     def from_bytes(cls, raw, ts=None):
@@ -101,20 +105,28 @@ class Packet:
             if ihl < 20:
                 raise ValueError(f"invalid IPv4 header length: {ihl}")
             if len(raw) < ip_start + ihl:
-                raise ValueError("packet is shorter than the declared IPv4 header")
+                raise ValueError(
+                    "packet is shorter than the declared IPv4 header",
+                )
 
-            total_length = struct.unpack("!H", raw[ip_start + 2 : ip_start + 4])[0]
+            total_length = struct.unpack(
+                "!H", raw[ip_start + 2:ip_start + 4],
+            )[0]
             if total_length < ihl:
-                raise ValueError("IPv4 total length is shorter than its header")
+                raise ValueError(
+                    "IPv4 total length is shorter than its header",
+                )
             if len(raw) < ip_start + total_length:
-                raise ValueError("packet is shorter than the declared IPv4 total length")
+                raise ValueError(
+                    "packet is shorter than the declared IPv4 total length",
+                )
 
             ip_version = 4
             proto = raw[ip_start + 9]
             ttl = raw[ip_start + 8]
             hop_limit = None
-            src_ip = socket.inet_ntoa(raw[ip_start + 12 : ip_start + 16])
-            dst_ip = socket.inet_ntoa(raw[ip_start + 16 : ip_start + 20])
+            src_ip = socket.inet_ntoa(raw[ip_start + 12:ip_start + 16])
+            dst_ip = socket.inet_ntoa(raw[ip_start + 16:ip_start + 20])
             transport_start = ip_start + ihl
             packet_end = ip_start + total_length
         elif ethertype == ETHERTYPE_IPV6:
@@ -126,17 +138,25 @@ class Packet:
             if version != 6:
                 raise ValueError(f"unsupported IP version: {version}")
 
-            payload_length = struct.unpack("!H", raw[ip_start + 4 : ip_start + 6])[0]
+            payload_length = struct.unpack(
+                "!H", raw[ip_start + 4:ip_start + 6],
+            )[0]
             total_length = 40 + payload_length
             if len(raw) < ip_start + total_length:
-                raise ValueError("packet is shorter than the declared IPv6 length")
+                raise ValueError(
+                    "packet is shorter than the declared IPv6 length",
+                )
 
             ip_version = 6
             proto = raw[ip_start + 6]
             ttl = None
             hop_limit = raw[ip_start + 7]
-            src_ip = socket.inet_ntop(socket.AF_INET6, raw[ip_start + 8 : ip_start + 24])
-            dst_ip = socket.inet_ntop(socket.AF_INET6, raw[ip_start + 24 : ip_start + 40])
+            src_ip = socket.inet_ntop(
+                socket.AF_INET6, raw[ip_start + 8:ip_start + 24],
+            )
+            dst_ip = socket.inet_ntop(
+                socket.AF_INET6, raw[ip_start + 24:ip_start + 40],
+            )
             transport_start = ip_start + 40
             packet_end = ip_start + total_length
         else:
@@ -152,39 +172,59 @@ class Packet:
         udp_len = None
         udp_checksum = None
         payload = b""
+        icmp_type = None
+        icmp_code = None
 
         if proto == IPPROTO_TCP:
             if packet_end < transport_start + 20:
                 raise ValueError("TCP packet is shorter than a TCP header")
 
-            src_port, dst_port = struct.unpack("!HH", raw[transport_start : transport_start + 4])
-            tcp_seq, tcp_ack = struct.unpack("!II", raw[transport_start + 4 : transport_start + 12])
+            src_port, dst_port = struct.unpack(
+                "!HH", raw[transport_start:transport_start + 4],
+            )
+            tcp_seq, tcp_ack = struct.unpack(
+                "!II", raw[transport_start + 4:transport_start + 12],
+            )
             tcp_header_len = (raw[transport_start + 12] >> 4) * 4
 
             if tcp_header_len < 20:
-                raise ValueError(f"invalid TCP header length: {tcp_header_len}")
+                raise ValueError(
+                    f"invalid TCP header length: {tcp_header_len}",
+                )
             if packet_end < transport_start + tcp_header_len:
-                raise ValueError("packet is shorter than the declared TCP header")
+                raise ValueError(
+                    "packet is shorter than the declared TCP header",
+                )
 
             flags_byte = raw[transport_start + 13]
             tcp_flags = parse_tcp_flags(flags_byte)
-            tcp_window = struct.unpack("!H", raw[transport_start + 14 : transport_start + 16])[0]
-            payload = raw[transport_start + tcp_header_len : packet_end]
+            tcp_window = struct.unpack(
+                "!H", raw[transport_start + 14:transport_start + 16],
+            )[0]
+            payload = raw[transport_start + tcp_header_len:packet_end]
         elif proto == IPPROTO_UDP:
             if packet_end < transport_start + 8:
                 raise ValueError("UDP packet is shorter than a UDP header")
 
             src_port, dst_port, udp_len, udp_checksum = struct.unpack(
-                "!HHHH", raw[transport_start : transport_start + 8]
+                "!HHHH", raw[transport_start:transport_start + 8],
             )
             if udp_len < 8:
                 raise ValueError(f"invalid UDP length: {udp_len}")
             if packet_end < transport_start + udp_len:
-                raise ValueError("packet is shorter than the declared UDP length")
+                raise ValueError(
+                    "packet is shorter than the declared UDP length",
+                )
 
-            payload = raw[transport_start + 8 : transport_start + udp_len]
+            payload = raw[transport_start + 8:transport_start + udp_len]
         else:
             payload = raw[transport_start:packet_end]
+
+        if proto in (IPPROTO_ICMP, IPPROTO_ICMPV6):
+            icmp_body = raw[transport_start:packet_end]
+            if len(icmp_body) >= 2:
+                icmp_type = icmp_body[0]
+                icmp_code = icmp_body[1]
 
         return cls(
             raw=raw,
@@ -205,6 +245,8 @@ class Packet:
             udp_len=udp_len,
             udp_checksum=udp_checksum,
             payload=payload,
+            icmp_type=icmp_type,
+            icmp_code=icmp_code,
         )
 
     def protocol_name(self):
@@ -216,11 +258,17 @@ class Packet:
         if self.src_port is None or self.dst_port is None:
             return f"{self.protocol_name()} {endpoints}"
 
-        endpoints = f"{self.src_ip}:{self.src_port} -> {self.dst_ip}:{self.dst_port}"
+        endpoints = (
+            f"{self.src_ip}:{self.src_port} -> "
+            f"{self.dst_ip}:{self.dst_port}"
+        )
 
         if self.proto == IPPROTO_TCP:
             flags = ",".join(self.tcp_flags) if self.tcp_flags else "-"
-            return f"TCP {endpoints} [{flags}] seq={self.tcp_seq} ack={self.tcp_ack}"
+            return (
+                f"TCP {endpoints} [{flags}] "
+                f"seq={self.tcp_seq} ack={self.tcp_ack}"
+            )
 
         if self.proto == IPPROTO_UDP:
             return f"UDP {endpoints} len={self.udp_len}"

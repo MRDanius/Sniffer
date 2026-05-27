@@ -69,7 +69,11 @@ def _is_http_request(line):
 def _is_http_response(line):
     parts = line.split(" ", 2)
 
-    return len(parts) >= 2 and parts[0].startswith("HTTP/") and parts[1].isdigit()
+    return (
+        len(parts) >= 2
+        and parts[0].startswith("HTTP/")
+        and parts[1].isdigit()
+    )
 
 
 def _parse_headers(lines):

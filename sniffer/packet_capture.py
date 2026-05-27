@@ -31,7 +31,9 @@ class PacketCapture:
             )
         except OSError as error:
             self.stop()
-            raise OSError(f"cannot use interface {self.iface}: {error}") from error
+            raise OSError(
+                f"cannot use interface {self.iface}: {error}",
+            ) from error
 
         self.running = True
 

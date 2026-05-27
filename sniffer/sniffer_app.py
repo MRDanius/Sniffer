@@ -39,16 +39,26 @@ class SnifferApp:
                     http = parse_http(packet)
                     self.logger.packet(packet, http)
 
-                    if self.config.count is not None and self.writer.pkt_count >= self.config.count:
+                    if (
+                        self.config.count is not None
+                        and self.writer.pkt_count >= self.config.count
+                    ):
                         self.capture.stop()
 
-            self.logger.info(f"Capture finished, saved packets: {self.writer.pkt_count}")
+            self.logger.info(
+                f"Capture finished, saved packets: {self.writer.pkt_count}",
+            )
             return 0
         except KeyboardInterrupt:
-            self.logger.info(f"Capture stopped, saved packets: {self.writer.pkt_count}")
+            self.logger.info(
+                f"Capture stopped, saved packets: {self.writer.pkt_count}",
+            )
             return 0
         except PermissionError:
-            self.logger.error("No permission for raw socket. Run with sudo or CAP_NET_RAW.")
+            self.logger.error(
+                "No permission for raw socket. "
+                "Run with sudo or CAP_NET_RAW.",
+            )
             return 1
         except OSError as error:
             self.logger.error(self._format_os_error(error))
@@ -65,7 +75,10 @@ class SnifferApp:
 
     def _format_os_error(self, error):
         if getattr(error, "errno", None) == errno.EPERM:
-            return "No permission for raw socket. Run with sudo or CAP_NET_RAW."
+            return (
+                "No permission for raw socket. "
+                "Run with sudo or CAP_NET_RAW."
+            )
 
         if getattr(error, "filename", None):
             return f"File error: {error.filename}: {error.strerror}"

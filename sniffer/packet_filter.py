@@ -1,4 +1,9 @@
-from sniffer.packet import IPPROTO_ICMP, IPPROTO_ICMPV6, IPPROTO_TCP, IPPROTO_UDP
+from sniffer.packet import (
+    IPPROTO_ICMP,
+    IPPROTO_ICMPV6,
+    IPPROTO_TCP,
+    IPPROTO_UDP,
+)
 
 
 PROTOCOLS = {

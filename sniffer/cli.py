@@ -55,7 +55,9 @@ class CLI:
     def parse(self, args=None):
         config = self.parser.parse_args(args)
 
-        if config.port is not None and (config.port < 1 or config.port > 65535):
+        if config.port is not None and (
+            config.port < 1 or config.port > 65535
+        ):
             self.parser.error("--port must be in range 1..65535")
 
         if config.count is not None and config.count < 1:
