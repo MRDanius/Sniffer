@@ -26,7 +26,7 @@ class PacketTest(unittest.TestCase):
         self.assertEqual(packet.proto, IPPROTO_TCP)
         self.assertEqual(packet.src_port, 12345)
         self.assertEqual(packet.dst_port, 80)
-        self.assertEqual(packet.summary(), "TCP 192.168.1.10:12345 -> 8.8.8.8:80")
+        self.assertEqual(packet.summary(), "TCP 192.168.1.10:12345 -> 8.8.8.8:80 [SYN] seq=0 ack=0")
 
     def test_parse_udp_packet(self):
         raw = ETHERNET_IPV4 + bytes.fromhex(
@@ -41,7 +41,7 @@ class PacketTest(unittest.TestCase):
         self.assertEqual(packet.proto, IPPROTO_UDP)
         self.assertEqual(packet.src_port, 5353)
         self.assertEqual(packet.dst_port, 53)
-        self.assertEqual(packet.summary(), "UDP 10.0.0.1:5353 -> 1.1.1.1:53")
+        self.assertEqual(packet.summary(), "UDP 10.0.0.1:5353 -> 1.1.1.1:53 len=8")
 
     def test_parse_icmp_packet(self):
         raw = ETHERNET_IPV4 + bytes.fromhex(
@@ -66,7 +66,7 @@ class PacketTest(unittest.TestCase):
             "0000000000000000000000000000000000000000"
         )
 
-        with self.assertRaisesRegex(ValueError, "unsupported Ethernet type"):
+        with self.assertRaisesRegex(ValueError, "packet is shorter than an IPv6 header"):
             Packet.from_bytes(raw)
 
     def test_rejects_truncated_ipv4_packet(self):
